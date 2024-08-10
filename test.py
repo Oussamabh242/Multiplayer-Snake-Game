@@ -12,11 +12,19 @@ async def send(ws) :
 
 async def test():
     async with websockets.connect(uri) as ws :        
-         running = True 
-         while running :
+        connected = int(await ws.recv())
+        print(connected)
+        while connected < 3 :
+            res = await ws.recv()
+            print(res)
+            if res == 'start' :
+                print(res)
+                break
+        running = True 
+        while running :
 
             await send(ws)
-            time.sleep(0.1) 
+            await asyncio.sleep(0.1) 
     
 
 asyncio.run(test())
