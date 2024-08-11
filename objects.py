@@ -12,7 +12,7 @@ class Object :
     def __init__(self , x : float , y :float ,  width:int , height :int):
 
         ####################################
-        #  init object's size and postion             
+        #  init object's size and postion  #           
         ####################################
         self.x = x
         self.y = y 
@@ -30,6 +30,11 @@ class Food(Object) :
     def positionize(self , screen) :
         self.x = randint(20 , screen.get_width()-20)
         self.y = randint(20 , screen.get_height()-20)
+    def reset(self ,x , y) :
+        print('changeing ... ' , x , y) 
+        self.x = x  
+        self.y = y
+        
 
 class Player(Object) :
     color = 'red'
@@ -58,7 +63,7 @@ class Player(Object) :
                 changed = True
         return changed   
     def move(self, screen, dt):
-        speed = 200 * dt 
+        speed = 150 * dt 
         if self.direction == 'UP':
             self.move_all(screen, 0, -speed)
         elif self.direction == 'DOWN':
@@ -77,6 +82,13 @@ class Player(Object) :
             self.x = screen.get_width()
         if self.x > screen.get_width() :
             self.x = 0
+    def get_pos(self) :
+        arr = []
+        current = self 
+        while current :
+            arr.append([current.x , current.y])
+            current = current.next
+        return arr
         
 
     def move_all(self, screen, dx, dy):
@@ -91,7 +103,7 @@ class Player(Object) :
         self.x += dx
         self.y += dy
         self.bound(screen)
-        self.render(screen, self.color)
+        # self.render(screen, self.color)
         
         # Move body
         current = self.next
@@ -99,7 +111,7 @@ class Player(Object) :
         while current:
             current.x, current.y = old_positions[i]
             current.bound(screen)
-            current.render(screen, self.color)
+            # current.render(screen, self.color)
             current = current.next
             i += 1           
 
@@ -109,11 +121,31 @@ class Player(Object) :
         self.tail.next = new
         self.tail = new
         self.length +=1
-        print(self.length)
-    def shrink(self):
+
+    def shrink(self , x , y):
         self.next = None 
         self.tail = self 
         self.length = 1
+        self.x = x 
+        self.y = y
+    def setall(self , arr) :
+
+        self.x = arr[0][0]
+        self.y = arr[0][1]
+        self.next = None
+        self.tail = self
+        current = self 
+        for i in range(1 , len(arr)) :
+            x = arr[i][0]
+            y = arr[i][1]
+            new = Player(x ,y ,self.width , self.height)
+            current.next = new 
+            self.tail = new
+            current = current.next 
+
+
+
+
     def self_collide(self):
         ## i think if the length is less than 5 there will be no self collision 
         ## so i will be checking form the 5th node ...
@@ -138,6 +170,10 @@ class Player(Object) :
     def collide(self, obj:Object):
         return (abs(self.x - obj.x) < (self.width + obj.width) / 2 and
                 abs(self.y - obj.y) < (self.height + obj.height) / 2)
+    def put(self , x , y):
+        self.x  = x 
+        self.y = y
+        
 
 class LinkedList:
     def __init__(self, head: Player, next: Optional['LinkedList'] = None, gap: int = 5):

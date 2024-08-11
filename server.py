@@ -1,5 +1,8 @@
 import asyncio
 import websockets 
+import random
+import json
+
 
 rooms  = {
     'sup': {
@@ -8,26 +11,112 @@ rooms  = {
     }
 }
 
+def re_food() :
+    return [random.randint(30 , 600) , random.randint(30 , 600) ]
+
+def collide(a , b , width):
+    return (abs(a[0] - b[0]) < width and
+            abs(a[1] - b[1]) < width)
+def collides(a , b , food ) :
+    head_to_head = collide(a[0] , b[0] ,30) ;
+    head_to_food = collide(a[0] , food ,25  ) 
+    head_to_body = False 
+    this_head = a[0]
+    for part in b :
+        if collide(this_head , part  ,30) :
+            head_to_body = True 
+            break 
+    return (head_to_head , head_to_body , head_to_food)
+
+def formulate_response(id , oid , food , roomName) :
+    this= rooms[roomName][id]['pos']
+    other= rooms[roomName][oid]['pos']
+    hh , hb , hf = collides(this ,other ,food)
+    act = 'None'
+    if hh :
+        act = 'shrink' 
+        rooms[roomName][id]['pos'] = initPlayer()
+
+        rooms[roomName][oid]['pos'] = initPlayer()
+        rooms[roomName][oid]['respawn'] = True
+
+    elif hb :
+        act = 'shrink' 
+        rooms[roomName][id]['pos'] = initPlayer()
+    
+    elif hf :
+        act = 'grow'
+        rooms[roomName]['food'] = re_food() 
+    return  {
+        'act' : act , 
+        'opp' : rooms[roomName][oid]['pos'] , 
+        'my'  : rooms[roomName][id]['pos'] ,
+        'food': rooms[roomName]['food']
+    }
+
+
+
+
+def initPlayer():
+    return [[random.randint(30 , 600 ) , random.randint(30 , 400 ) , 30 , 30 ]] 
 
 
 async def hello(websocket) :
-    rooms['sup'][websocket.id] = websocket
+    rooms['sup'][websocket.id] = {
+        'socket' : websocket ,
+        'pos' : initPlayer() , 
+        'respawn' : False
+    }
     print(len(rooms['sup']))
-    await websocket.send(str(len(rooms['sup'])))  
     if len(rooms['sup']) >= 3 :
         print(rooms)
-        await broadcast('start' , rooms['sup'])
+        await broadcast( rooms['sup'])
+    id = websocket.id
+    roomName = 'sup'
     while True :
-        msg = await websocket.recv()
-        print('recived ' + msg)
+        room = rooms['sup']
+        this_pos = await websocket.recv()
+        this_pos = json.loads(this_pos)
+        
+        rooms[roomName][id]['pos'] = this_pos['pos']
+        rooms[roomName][id]['len'] = this_pos['len']
+        
+        
+        other_id = get_other_id(id , room)
+        food = room['food']
+        response = formulate_response(id ,other_id ,food  ,'sup') 
+        await websocket.send(json.dumps(response))
 
+def get_other_id(id , room) :
+    for thing in room.keys():
+        if thing != 'food' and thing != id :
+            return thing
+def get_other_pos(id , room) : 
+    return room[id]['pos']
 
-async def broadcast(msg , room) :
+def other_pos(id , room):
+    pos = {}
+    for thing in room.keys():
+        if thing != id and thing!='food' :
+            pos['opp'] = room[thing]['pos']
+    pos['food'] = room['food'][0:2]
+    return pos
+
+async def broadcast(room) :
     for thing in room.keys() :
         if thing!= 'food' :
-            await room[thing].send(msg)
-            print(f'sent to {thing}')
+            init = {
+                'my' : room[thing]['pos'] , 
+                'opp' : room[get_opp(thing, room)]['pos'] ,
+                'food': room['food']
+            }
+            await room[thing]['socket'].send(json.dumps(init))
 
+def get_opp(id  , room) :
+     for thing in room.keys() :
+        if thing!= 'food' and thing != id:
+            return thing
+ 
 
 async def main():
     async with websockets.serve(hello , 'localhost' ,8765 ):
