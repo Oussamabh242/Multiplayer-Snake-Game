@@ -149,7 +149,7 @@ def get_opp(id  , room) :
  
 
 async def main():
-    async with websockets.serve(hello , 'localhost' ,8765 ):
+    async with websockets.serve(hello , '0.0.0.0' ,8765 ):
         await asyncio.Future()
 
 
