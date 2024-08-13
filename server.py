@@ -3,16 +3,19 @@ import websockets
 import random
 import json
 
+def generate_food_position(min_x, max_x, min_y, max_y):
+    x = random.randint(min_x, max_x)
+    y = random.randint(min_y, max_y)
+    return [x, y, 20, 20]
 
 rooms  = {
     'sup': {
        
-        'food' : [200 , 300 , 20 , 20]
+        'food' : generate_food_position(20, 580, 20, 380)
     }
 }
 
-def re_food() :
-    return [random.randint(30 , 600) , random.randint(30 , 600) ]
+
 
 def collide(a , b , width):
     return (abs(a[0] - b[0]) < width and
@@ -26,6 +29,7 @@ def collides(a , b , food ) :
         if collide(this_head , part  ,30) :
             head_to_body = True 
             break 
+
     return (head_to_head , head_to_body , head_to_food)
 
 def formulate_response(id , oid , food , roomName) :
@@ -36,22 +40,25 @@ def formulate_response(id , oid , food , roomName) :
     if hh :
         act = 'shrink' 
         rooms[roomName][id]['pos'] = initPlayer()
-
-        rooms[roomName][oid]['pos'] = initPlayer()
-        rooms[roomName][oid]['respawn'] = True
+        rooms[roomName][id]['score'] =0 
+        # rooms[roomName][oid]['pos'] = initPlayer()
+        # rooms[roomName][oid]['respawn'] = True
 
     elif hb :
         act = 'shrink' 
         rooms[roomName][id]['pos'] = initPlayer()
-    
+        rooms[roomName][id]['score'] = 0   
     elif hf :
         act = 'grow'
-        rooms[roomName]['food'] = re_food() 
+        rooms[roomName]['food'] =  generate_food_position(20, 580, 20, 380) 
+        rooms['sup'][id]['score']+=1
     return  {
         'act' : act , 
         'opp' : rooms[roomName][oid]['pos'] , 
         'my'  : rooms[roomName][id]['pos'] ,
-        'food': rooms[roomName]['food']
+        'food': rooms[roomName]['food'] ,
+        'my_score' : rooms[roomName][id]['score'] ,
+        'other_score' : rooms[roomName][oid]['score']
     }
 
 
@@ -65,26 +72,49 @@ async def hello(websocket) :
     rooms['sup'][websocket.id] = {
         'socket' : websocket ,
         'pos' : initPlayer() , 
-        'respawn' : False
+        'respawn' : False ,
+        'score' : 0
     }
-    print(len(rooms['sup']))
+
     if len(rooms['sup']) >= 3 :
-        print(rooms)
         await broadcast( rooms['sup'])
     id = websocket.id
     roomName = 'sup'
     while True :
         room = rooms['sup']
         this_pos = await websocket.recv()
-        this_pos = json.loads(this_pos)
         
-        rooms[roomName][id]['pos'] = this_pos['pos']
-        rooms[roomName][id]['len'] = this_pos['len']
-        
-        
-        other_id = get_other_id(id , room)
-        food = room['food']
-        response = formulate_response(id ,other_id ,food  ,'sup') 
+        ## synchrnisation issue with this 
+        ## after couple of times they collide head to head
+        ## the cordinates shown on the screen aren't same 
+        ## as the server 
+
+        if room[id]['respawn']==True :
+            rooms['sup'][id]['respawn'] = False
+             
+
+            # generate response :
+            response = {
+                'act' :  'shrinkall', 
+                'my'  :  room[id]['pos']  , 
+                'opp' :  get_other_pos(get_other_id(id ,room),room),
+                'food': room['food']
+            } 
+            await websocket.send(json.dumps(response))
+
+        else :  
+            #########  IF NOT HEAD TO HEAD COLLISON ######
+            this_pos = json.loads(this_pos)
+            
+            rooms[roomName][id]['pos'] = this_pos['pos']
+            rooms[roomName][id]['len'] = this_pos['len']
+            
+            
+            other_id = get_other_id(id , room)
+            food = room['food']
+            response = formulate_response(id ,other_id ,food  ,'sup')  
+            
+
         await websocket.send(json.dumps(response))
 
 def get_other_id(id , room) :

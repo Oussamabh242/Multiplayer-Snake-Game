@@ -162,7 +162,10 @@ class Player(Object) :
             current = current.next
 
     def render_all(self, screen, color):
-        current = self
+        current = self        
+        if self.next : 
+            self.render(screen,'white')
+            current = self.next
         while current :
             current.render(screen , color) 
             current = current.next
