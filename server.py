@@ -74,7 +74,8 @@ async def hello(websocket) :
         'pos' : initPlayer() , 
         'respawn' : False ,
         'score' : 0
-    }
+    } 
+    print(rooms['sup'][websocket.id])
 
     if len(rooms['sup']) >= 3 :
         await broadcast( rooms['sup'])
