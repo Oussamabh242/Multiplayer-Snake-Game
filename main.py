@@ -9,7 +9,7 @@ import json
 
 print('waiting ... ')
 uri = 'ws://102.159.126.67:8765'
-websockets.connect(uri)
+
 pygame.font.init() 
 font = pygame.font.Font(None, 36)
 
