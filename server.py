@@ -9,10 +9,10 @@ def generate_food_position(min_x, max_x, min_y, max_y):
     return [x, y, 20, 20]
 
 rooms  = {
-    'sup': {
-       
-        'food' : generate_food_position(20, 580, 20, 380)
-    }
+    # 'sup': {
+    #
+    #     'food' : generate_food_position(20, 580, 20, 380)
+    # }
 }
 
 
@@ -51,7 +51,7 @@ def formulate_response(id , oid , food , roomName) :
     elif hf :
         act = 'grow'
         rooms[roomName]['food'] =  generate_food_position(20, 580, 20, 380) 
-        rooms['sup'][id]['score']+=1
+        rooms[roomName][id]['score']+=1
     return  {
         'act' : act , 
         'opp' : rooms[roomName][oid]['pos'] , 
@@ -69,20 +69,36 @@ def initPlayer():
 
 
 async def hello(websocket) :
-    rooms['sup'][websocket.id] = {
-        'socket' : websocket ,
-        'pos' : initPlayer() , 
-        'respawn' : False ,
-        'score' : 0
-    } 
-    print(rooms['sup'][websocket.id])
+    handshake = await websocket.recv()
+    handshake = json.loads(handshake) 
+    # rooms['sup'][websocket.id] = {
+    #     'socket' : websocket ,
+    #     'pos' : initPlayer() , 
+    #     'respawn' : False ,
+    #     'score' : 0
+    # }
+    print(handshake) 
+        
+    roomName = handshake["room"]
+    if handshake['choice'] == 1 :
+        rooms[roomName] = {}
+        rooms[roomName]['food'] =generate_food_position(30 ,570 ,30 ,370)
+    
+    rooms[roomName][websocket.id] = {
+            'socket' : websocket , 
+            'pos' : initPlayer() , 
+            'respawn' : False ,
+            'score' :0
+    }
 
-    if len(rooms['sup']) >= 3 :
-        await broadcast( rooms['sup'])
+    print(rooms[roomName] , len(rooms[roomName]))
+
+    if len(rooms[roomName]) >= 3 :
+        await broadcast(rooms[roomName])
     id = websocket.id
-    roomName = 'sup'
+    
     while True :
-        room = rooms['sup']
+        room = rooms[roomName]
         this_pos = await websocket.recv()
         
         ## synchrnisation issue with this 
@@ -91,7 +107,7 @@ async def hello(websocket) :
         ## as the server 
 
         if room[id]['respawn']==True :
-            rooms['sup'][id]['respawn'] = False
+            rooms[roomName][id]['respawn'] = False
              
 
             # generate response :
@@ -113,7 +129,7 @@ async def hello(websocket) :
             
             other_id = get_other_id(id , room)
             food = room['food']
-            response = formulate_response(id ,other_id ,food  ,'sup')  
+            response = formulate_response(id ,other_id ,food  ,roomName)  
             
 
         await websocket.send(json.dumps(response))
@@ -150,7 +166,7 @@ def get_opp(id  , room) :
  
 
 async def main():
-    async with websockets.serve(hello , '0.0.0.0' ,8765 ):
+    async with websockets.serve(hello , 'localhost' ,8765 ):
         await asyncio.Future()
 
 

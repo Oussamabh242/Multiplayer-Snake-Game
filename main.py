@@ -8,14 +8,22 @@ import asyncio
 import json
 
 print('waiting ... ')
-uri = 'ws://102.159.126.67:8765'
+uri = 'ws://localhost:8765'
 
 pygame.font.init() 
 font = pygame.font.Font(None, 36)
 
 # Render the text on a transparent surface
 
-
+def play() :
+    pygame.mixer.init()
+    pygame.mixer.music.load('unknown.mp3')
+    pygame.mixer.music.play()
+    # while pygame.mixer.music.get_busy() == True:
+        # continue
+def stop():
+    if pygame.mixer.music.get_busy():  # Check if music is playing
+        pygame.mixer.music.stop()
 player = 1 
 opp = 1 
 food = 1
@@ -27,7 +35,18 @@ def init(obj) :
     return (player , opp , food)
 
 async def main():
+    
+        
+ 
     async with websockets.connect(uri) as ws:
+        choice = int(input('1 to create a room \n2 to join a room\n>>>'))
+        room_name = input('enter room name: ')
+        await ws.send(json.dumps({
+            "choice" : choice ,
+            "room" : room_name
+        }))
+    
+        ## waiting for the other player to connecet
         res = {}
         while True:
             res = await ws.recv()
@@ -44,7 +63,7 @@ async def main():
         clock = pygame.time.Clock()
         running = True
         dt = 0
-
+        play()
         while running:
             for event in pygame.event.get():
                 if event.type == pygame.QUIT:
@@ -72,6 +91,8 @@ async def main():
                 opp.shrink(*response['opp'][0][0:2])
             elif response['act'] == 'shrink':
                 player.shrink(*response['my'][0][0:2])
+                stop()
+                play()
             else:
                 opp.setall(response['opp'])
 
