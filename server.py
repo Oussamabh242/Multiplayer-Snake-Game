@@ -68,7 +68,7 @@ def initPlayer():
     return [[random.randint(30 , 600 ) , random.randint(30 , 400 ) , 30 , 30 ]] 
 
 
-async def hello(websocket) :
+async def handler(websocket) :
     handshake = await websocket.recv()
     handshake = json.loads(handshake) 
     # rooms['sup'][websocket.id] = {
@@ -166,7 +166,7 @@ def get_opp(id  , room) :
  
 
 async def main():
-    async with websockets.serve(hello , 'localhost' ,8765 ):
+    async with websockets.serve(handler , 'localhost' ,8765 ):
         await asyncio.Future()
 
 
