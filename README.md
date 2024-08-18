@@ -51,7 +51,7 @@ To get started with the game, follow these steps:
     Start the game client with:
 
     ```bash
-    python game.py
+    python main.py
     ```
 
 5. **Connect and Play:**
