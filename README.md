@@ -4,6 +4,8 @@ Welcome to the Multiplayer Snake Game! 🎮🐍
 
 This project is a fun and interactive multiplayer version of the classic Snake game. It lets you and your friends compete in real-time to see who can grow their snake the longest. Built with Python and Pygame for the client-side, and WebSockets for the server-side communication.
 
+![game](game.gif)
+
 ## Features
 
 - **Multiplayer Support**: Play against friends in real-time.
