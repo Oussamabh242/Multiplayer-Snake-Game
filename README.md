@@ -43,7 +43,7 @@ To get started with the game, follow these steps:
     Start the WebSocket server with:
 
     ```bash
-    python server.py
+    python3 server.py
     ```
 
 4. **Run the Game:**
@@ -51,7 +51,7 @@ To get started with the game, follow these steps:
     Start the game client with:
 
     ```bash
-    python main.py
+    python3 main.py
     ```
 
 5. **Connect and Play:**
