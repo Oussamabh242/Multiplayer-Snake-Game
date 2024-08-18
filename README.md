@@ -1,4 +1,4 @@
-# Snake-online
+# Multiplayer Snake Game
 
 Welcome to the Multiplayer Snake Game! 🎮🐍
 
@@ -26,8 +26,8 @@ To get started with the game, follow these steps:
 1. **Clone the repository:**
 
     ```bash
-    git clone https://github.com/Oussamabh242/Snake-online.git
-    cd Snake-online
+    git clone https://github.com/Oussamabh242/snake-multiplayer.git
+    cd snake-multiplayer
     ```
 
 2. **Install dependencies:**
